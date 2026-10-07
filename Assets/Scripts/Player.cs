@@ -82,6 +82,15 @@ public class Player : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if(collision.gameObject.tag == "Checkpoint")
+        {
+            lastPosition = collision.transform.position;
+            collision.gameObject.GetComponent<Checkpoint>().Hit();
+        }
+    }
+
     public void AddPresent()
     {
         score++;
