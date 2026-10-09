@@ -14,12 +14,16 @@ public class RobotBevahiour : MonoBehaviour
     [SerializeField] private GameObject projectile;
     private float fireCountdown;
 
+    private AudioSource audio;
+    private int strength;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         animator.SetInteger("Direction", direction);
         animator.SetFloat("Move", 0);
+        audio = GetComponent<AudioSource>();
     }
 
 
@@ -36,6 +40,7 @@ public class RobotBevahiour : MonoBehaviour
             isWalking = true;
             elapsedTime = 0;
             direction *= -1;
+            audio.Play();
             animator.SetInteger("Direction", direction);
             animator.SetFloat("Move", direction);
         }
@@ -44,8 +49,37 @@ public class RobotBevahiour : MonoBehaviour
             isWalking = false;
             elapsedTime = 0;
             animator.SetFloat("Move", 0);
+            audio.Pause();
         }
         elapsedTime += Time.deltaTime;
+
+        //if(is)
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.GetComponent<Projectile>() != null)
+        {
+            rb.linearVelocity = new Vector2(0, 0);
+            hit();
+        }
+    }
+
+    private void hit()
+    {
+        //if (!isInvincible)
+        //{
+            strength--;
+
+            if(strength <= 0)
+            {
+                Destroy(this.gameObject);
+                return;
+            }
+
+            //isInvincible = true;
+            //this.GetComponent<spriteRenderer>().color = new Color(1,1,1,0.5f);
+        //}
     }
 
     private void FixedUpdate()

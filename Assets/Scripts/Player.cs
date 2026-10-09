@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class Player : MonoBehaviour
 {
@@ -13,8 +14,16 @@ public class Player : MonoBehaviour
     private Animator animator;
     private int jumpCount = 0;
     private int score = 0;
-    private int lives = 3;
+    [SerializeField] private int lives = 3;
     private Vector2 lastPosition;
+
+    // for invinciblitly
+    private float invincibilityTime = 3.0f;
+    private float invincibilityCount = 0f;
+    public bool isInvin = false;
+    private AudioSource audio;
+    private bool isPlaying = false;
+    [SerializeField] private AudioClip collectClip;
     
     void Start()
     {
@@ -23,6 +32,9 @@ public class Player : MonoBehaviour
         animator = GetComponent<Animator>();
 
         lastPosition = rb.transform.position;
+
+        audio = GetComponent<AudioSource>();
+
     }
 
     private void Fire()
@@ -52,9 +64,29 @@ public class Player : MonoBehaviour
         {
             InputSystem.actions["Attack"].Reset();
             Fire();
-            /*GameObject sb = Instantiate(projectile, rb.position, Quaternion.identity);
-            Projectile pro = sb.GetComponent<Projectile>();
-            pro.Launch(new Vector2(direction, 0), 300);*/
+        }
+
+        if(move.x != 0 && jumpCount == 0 && !isPlaying)
+        {
+            audio.Play();
+            isPlaying = true;
+        }
+
+        if(isPlaying && (jumpCount > 0 || move.x == 0))
+        {
+            audio.Pause();
+            isPlaying = false;
+        }
+
+        if(isInvin)
+        {
+            invincibilityCount += Time.deltaTime;
+            if(invincibilityCount > invincibilityTime)
+            {
+                isInvin = false;
+                invincibilityCount = 0;
+                this.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 1f);
+            }
         }
     }
 
@@ -73,13 +105,35 @@ public class Player : MonoBehaviour
         {
             jumpCount = 0;
         }
+        else if(collision.gameObject.tag == "EnemyProjectile" && !isInvin)
+        {
+            rb.linearVelocity = Vector2.zero;
+            PlayerHit();
+        }
+        else if(collision.gameObject.tag == "EnemyProjectile" && !isInvin)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
         
-        if(collision.gameObject.tag == "EnemyProjectile")
+        /*if(collision.gameObject.tag == "EnemyProjectile")
         {
             lives--;
             //gm.updateLives(lives);
             rb.transform.position = lastPosition;
-        }
+        }*/
+    }
+
+    private void PlayerHit()
+    {
+        lives--;
+            ui.SetLives(lives);
+            rb.transform.position = lastPosition;
+            if(lives == 0)
+            {
+                SceneManager.LoadScene("SampleScene");
+            }
+            isInvin = true;
+            this.GetComponent<SpriteRenderer>().color = new Color(1, 1, 1, 0.5f);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -93,7 +147,20 @@ public class Player : MonoBehaviour
 
     public void AddPresent()
     {
+        if(isPlaying)
+        {
+            audio.Pause();
+        }
+        audio.PlayOneShot(collectClip);
+        if(isPlaying)
+        {
+            audio.Play();
+        }
         score++;
+        /*if(score == 5)
+        {
+            //win condition - load a new scene or whatever
+        }*/
         Debug.Log(score);
         ui.setScore(score);
     }
